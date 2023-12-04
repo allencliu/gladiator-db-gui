@@ -2,14 +2,16 @@ import mysql.connector
 import tkinter as tk
 from tkinter import ttk
 
-# Replace these values with your MySQL server details
 host = "localhost"
 user = "root"
 password = "&%Bn96=mdQe4"
 database = "gladiator"
 
-# Function to fetch data for a specific tree
-def fetch_data_for_tree(tree_option):
+# Global variable for pagination
+current_offset = 0
+
+# Function to fetch data for a specific tree with pagination
+def fetch_data_for_tree(tree_option, offset=0, limit=50):
     try:
         connection = mysql.connector.connect(
             host=host,
@@ -23,8 +25,8 @@ def fetch_data_for_tree(tree_option):
 
             mycursor = connection.cursor()
 
-            # Fetch data for the selected tree
-            query = f"SELECT * FROM gladiator.{tree_option.replace(' ', '').lower()};"
+            # Fetch data for the selected tree with pagination
+            query = f"SELECT * FROM gladiator.{tree_option.replace(' ', '').lower()} LIMIT {limit} OFFSET {offset};"
             mycursor.execute(query)
             result = mycursor.fetchall()
 
@@ -50,6 +52,28 @@ def fetch_data_for_tree(tree_option):
         if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
+# Event handler for "Next" button
+def on_next():
+    global current_offset
+    current_offset += limit
+    fetch_data_for_tree(selected_option, current_offset, limit)
+
+# Event handler for "Previous" button
+def on_previous():
+    global current_offset
+    current_offset = max(0, current_offset - limit)
+    fetch_data_for_tree(selected_option, current_offset, limit)
+
+# Event handler for "Go to Page" entry
+def on_go_to_page():
+    try:
+        page_number = int(go_to_page_entry.get())
+        global current_offset
+        current_offset = max(0, (page_number - 1) * limit)
+        fetch_data_for_tree(selected_option, current_offset, limit)
+    except ValueError:
+        print("Invalid page number")
 
 # Function to get columns for a specific tree
 def get_columns_for_tree(tree_option):
@@ -98,14 +122,15 @@ tree_selector = ttk.Combobox(container, values=tree_options)
 tree_selector.set(tree_options[0])  # Set default value
 tree_selector.pack(side="left", padx=10)
 
+# Initialize limit and selected_option
+limit = 50  # Adjust the limit based on your requirements
+selected_option = tree_options[0]  # Set the default option
+
 # Event handler for tree selection
 def on_tree_select(event):
+    global selected_option
     selected_option = tree_selector.get()
     fetch_data_for_tree(selected_option)
-
-# Fetch Button
-fetch_button = tk.Button(container, text="Fetch Data", command=lambda: fetch_data_for_tree(tree_selector.get()))
-fetch_button.pack(side="left", padx=10)
 
 # Bind the event handler to the tree_selector
 tree_selector.bind("<<ComboboxSelected>>", on_tree_select)
@@ -118,6 +143,24 @@ tree.pack(expand=True, fill="both")
 
 # Fetch data for the initial tree
 fetch_data_for_tree(tree_selector.get())
+
+# Entry to Go to a Specific Page
+go_to_page_label = tk.Label(container, text="Go to Page:")
+go_to_page_label.pack(side="left", padx=5)
+
+go_to_page_entry = tk.Entry(container)
+go_to_page_entry.pack(side="left", padx=5)
+
+go_to_page_button = tk.Button(container, text="Go", command=on_go_to_page)
+go_to_page_button.pack(side="left", padx=5)
+
+# Previous Button
+previous_button = tk.Button(container, text="Previous", command=on_previous)
+previous_button.pack(side="left", padx=10)
+
+# Next Button
+next_button = tk.Button(container, text="Next", command=on_next)
+next_button.pack(side="left", padx=10)
 
 # Run the Tkinter event loop
 root.mainloop()
