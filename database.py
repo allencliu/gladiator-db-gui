@@ -12,10 +12,9 @@ current_offset = 0
 
 sort_column = None
 sort_order = "ASC"
-
 # Function to fetch data for a specific tree with pagination and sorting
-def fetch_data_for_tree(tree_option, offset=0, limit=50):
-    global sort_column, sort_order  # Add this line to access global variables
+def fetch_data_for_tree(tree_option):
+    global current_offset
 
     try:
         connection = mysql.connector.connect(
@@ -30,20 +29,14 @@ def fetch_data_for_tree(tree_option, offset=0, limit=50):
 
             mycursor = connection.cursor()
 
-            # Reset sort column when switching tables
-            if tree_option != get_table_name(sort_column):
-                sort_column = None
-
-            # Fetch data for the selected tree with pagination and sorting
-            query = f"SELECT * FROM gladiator.{tree_option.replace(' ', '').lower()}"
-
-            if sort_column:
-                query += f" ORDER BY {sort_column} {sort_order}"
-
-            query += f" LIMIT {limit} OFFSET {offset};"
-
+            # Fetch all records for the current page
+            query = f"SELECT * FROM gladiator.{tree_option.replace(' ', '').lower()} LIMIT {limit} OFFSET {current_offset};"
             mycursor.execute(query)
             result = mycursor.fetchall()
+
+            # Sort the records within Python
+            if sort_column and sort_column in get_columns_for_tree(tree_option):
+                result.sort(key=lambda x: x[get_columns_for_tree(tree_option).index(sort_column)], reverse=(sort_order == "DESC"))
 
             # Clear existing data in the Treeview
             for row in tree.get_children():
@@ -78,8 +71,7 @@ def get_table_name(column):
 
 # Function to sort the Treeview
 def sort_tree(tree, tree_option, column):
-    global sort_column, sort_order  # Add this line to access global variables
-
+    global sort_column, sort_order, current_offset
     # Determine the current sort order for the column
     if sort_column == column:
         sort_order = "DESC" if sort_order == "ASC" else "ASC"
@@ -87,28 +79,28 @@ def sort_tree(tree, tree_option, column):
         sort_column = column
         sort_order = "ASC"
 
-    # Fetch data with sorting
-    fetch_data_for_tree(tree_option, current_offset, limit)
+    # Fetch data for the current page
+    fetch_data_for_tree(tree_option)
 
-# Event handler for "Next" button
+# Update event handlers for "Next" and "Previous" buttons
 def on_next():
     global current_offset
     current_offset += limit
-    fetch_data_for_tree(selected_option, current_offset, limit)
+    fetch_data_for_tree(selected_option)
 
-# Event handler for "Previous" button
 def on_previous():
     global current_offset
     current_offset = max(0, current_offset - limit)
-    fetch_data_for_tree(selected_option, current_offset, limit)
+    fetch_data_for_tree(selected_option)
 
-# Event handler for "Go to Page" entry
+
+# Update event handler for "Go to Page" entry
 def on_go_to_page():
     try:
         page_number = int(go_to_page_entry.get())
         global current_offset
         current_offset = max(0, (page_number - 1) * limit)
-        fetch_data_for_tree(selected_option, current_offset, limit)
+        fetch_data_for_tree(selected_option)
     except ValueError:
         print("Invalid page number")
 
