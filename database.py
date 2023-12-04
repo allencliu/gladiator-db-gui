@@ -82,7 +82,12 @@ tree = ttk.Treeview(root, columns=columns, show="headings")
 # Set column headings
 for col in columns:
     tree.heading(col, text=col)
-    tree.column(col, width=100)  # Adjust the width as needed
+    tree.column(col)  # Adjust the width as needed
+
+# Configure the style for the Treeview widget
+style = ttk.Style()
+style.configure("Treeview", font=("Arial", 14))  # Adjust the font family and size as needed
+style.configure("Treeview.Heading", font=("Arial", 14))
 
 # Dropdown menu and fetch button container
 container = ttk.Frame(root)
