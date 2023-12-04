@@ -10,8 +10,13 @@ database = "gladiator"
 # Global variable for pagination
 current_offset = 0
 
-# Function to fetch data for a specific tree with pagination
+sort_column = None
+sort_order = "ASC"
+
+# Function to fetch data for a specific tree with pagination and sorting
 def fetch_data_for_tree(tree_option, offset=0, limit=50):
+    global sort_column, sort_order  # Add this line to access global variables
+
     try:
         connection = mysql.connector.connect(
             host=host,
@@ -25,8 +30,18 @@ def fetch_data_for_tree(tree_option, offset=0, limit=50):
 
             mycursor = connection.cursor()
 
-            # Fetch data for the selected tree with pagination
-            query = f"SELECT * FROM gladiator.{tree_option.replace(' ', '').lower()} LIMIT {limit} OFFSET {offset};"
+            # Reset sort column when switching tables
+            if tree_option != get_table_name(sort_column):
+                sort_column = None
+
+            # Fetch data for the selected tree with pagination and sorting
+            query = f"SELECT * FROM gladiator.{tree_option.replace(' ', '').lower()}"
+
+            if sort_column:
+                query += f" ORDER BY {sort_column} {sort_order}"
+
+            query += f" LIMIT {limit} OFFSET {offset};"
+
             mycursor.execute(query)
             result = mycursor.fetchall()
 
@@ -38,7 +53,7 @@ def fetch_data_for_tree(tree_option, offset=0, limit=50):
             columns = get_columns_for_tree(tree_option)
             tree["columns"] = columns
             for col in columns:
-                tree.heading(col, text=col)
+                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, tree_option, c))
                 tree.column(col, width=100)  # Adjust the width as needed
 
             # Insert new data into the Treeview
@@ -52,6 +67,28 @@ def fetch_data_for_tree(tree_option, offset=0, limit=50):
         if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
+# Function to get table name from a column name
+def get_table_name(column):
+    if column:
+        for table_option in tree_options:
+            if column in get_columns_for_tree(table_option):
+                return table_option
+    return None
+
+# Function to sort the Treeview
+def sort_tree(tree, tree_option, column):
+    global sort_column, sort_order  # Add this line to access global variables
+
+    # Determine the current sort order for the column
+    if sort_column == column:
+        sort_order = "DESC" if sort_order == "ASC" else "ASC"
+    else:
+        sort_column = column
+        sort_order = "ASC"
+
+    # Fetch data with sorting
+    fetch_data_for_tree(tree_option, current_offset, limit)
 
 # Event handler for "Next" button
 def on_next():
@@ -79,7 +116,7 @@ def on_go_to_page():
 def get_columns_for_tree(tree_option):
     # Define your columns for each tree
     if tree_option == "Gladiator Info":
-        return ("GladiatorID", "Name", "Age", "BirthYear", "Origin", "Height (cm)", "Weight (kg)")
+        return ("GladiatorID", "Name", "Age", "BirthYear", "Origin", "Height", "Weight")
     elif tree_option == "Combat Stats":
         return ("GladiatorID", "Category", "Wins", "Losses")
     elif tree_option == "Skills":
@@ -100,13 +137,13 @@ root.title("Gladiator Index")
 root.geometry("1600x900")
 
 # Create a Treeview widget to display data
-columns = ("GladiatorID", "Name", "Age", "BirthYear", "Origin", "Height (cm)", "Weight (kg)")
+columns = ("GladiatorID", "Name", "Age", "BirthYear", "Origin", "Height", "Weight")
 tree = ttk.Treeview(root, columns=columns, show="headings")
 
-# Set column headings
+# Set up column headings with sorting capability
 for col in columns:
-    tree.heading(col, text=col)
-    tree.column(col)  # Adjust the width as needed
+    tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, selected_option, c))
+    tree.column(col, width=100)  # Adjust the width as needed
 
 # Configure the style for the Treeview widget
 style = ttk.Style()
