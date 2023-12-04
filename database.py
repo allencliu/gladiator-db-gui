@@ -86,8 +86,8 @@ for col in columns:
 
 # Configure the style for the Treeview widget
 style = ttk.Style()
-style.configure("Treeview", font=("Arial", 14))  # Adjust the font family and size as needed
-style.configure("Treeview.Heading", font=("Arial", 14))
+style.configure("Treeview", font=("Arial", 12))  # Adjust the font family and size
+style.configure("Treeview.Heading", font=("Arial", 12))
 
 # Dropdown menu and fetch button container
 container = ttk.Frame(root)
