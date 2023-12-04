@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS GladiatorInfo (
 );
 CREATE TABLE IF NOT EXISTS CombatStats (
     GladiatorID INT PRIMARY KEY,
-    FOREIGN KEY (GladiatorID) REFERENCES GladiatorInfo(GladiatorID),
+    FOREIGN KEY (GladiatorID) REFERENCES GladiatorInfo(GladiatorID),-- 
     Category VARCHAR(255),
     Wins INT,
     Losses INT
@@ -57,37 +57,44 @@ CREATE TABLE IF NOT EXISTS Outcome (
 
 
 -- Populate GladiatorInfo table
--- INSERT INTO GladiatorInfo (GladiatorID, Name, Age, BirthYear, Origin, Height, Weight)
--- SELECT GladiatorID,
---  Name, Age, BirthYear, Origin, Height, Weight
--- FROM gladiators;
+INSERT INTO GladiatorInfo (GladiatorID, Name, Age, BirthYear, Origin, Height, Weight)
+SELECT GladiatorID,
+ Name, Age, BirthYear, Origin, Height, Weight
+FROM gladiators
+LIMIT 10000;
 
 -- Populate CombatStats table
--- INSERT INTO CombatStats (GladiatorID, Category, Wins, Losses)
--- SELECT GladiatorID, Category, Wins, Losses
--- FROM gladiators;
+INSERT INTO CombatStats (GladiatorID, Category, Wins, Losses)
+SELECT GladiatorID, Category, Wins, Losses
+FROM gladiators
+LIMIT 10000;
 
 -- Populate Skills table
--- INSERT INTO Skills (GladiatorID, SpecialSkills, WeaponOfChoice, BattleStrategy, CrowdAppealTechniques, TacticalKnowledge)
--- SELECT GladiatorID, SpecialSkills, WeaponOfChoice, BattleStrategy, CrowdAppealTechniques, TacticalKnowledge
--- FROM gladiators;
+INSERT INTO Skills (GladiatorID, SpecialSkills, WeaponOfChoice, BattleStrategy, CrowdAppealTechniques, TacticalKnowledge)
+SELECT GladiatorID, SpecialSkills, WeaponOfChoice, BattleStrategy, CrowdAppealTechniques, TacticalKnowledge
+FROM gladiators
+LIMIT 10000;
 
 -- Populate BackgroundInfo table
 INSERT INTO BackgroundInfo (GladiatorID, PreviousOccupation, TrainingIntensity, BattleExperience, PersonalMotivation, AllegianceNetwork)
 SELECT GladiatorID, PreviousOccupation, TrainingIntensity, BattleExperience, PersonalMotivation, AllegianceNetwork
-FROM gladiators;
+FROM gladiators
+LIMIT 10000;
 
 -- Populate HealthInfo table
 INSERT INTO HealthInfo (GladiatorID, InjuryHistory, MentalResilience, DietAndNutrition, PsychologicalProfile, HealthStatus)
 SELECT GladiatorID, InjuryHistory, MentalResilience, DietAndNutrition, PsychologicalProfile, HealthStatus
-FROM gladiators;
+FROM gladiators
+LIMIT 10000;
 
 -- Populate ExternalFactors table
 INSERT INTO ExternalFactors (GladiatorID, EquipmentQuality, PatronWealth, PublicFavor, SocialStanding)
 SELECT GladiatorID, EquipmentQuality, PatronWealth, PublicFavor, SocialStanding
-FROM gladiators;
+FROM gladiators
+LIMIT 10000;
 
 -- Populate Outcome table
 INSERT INTO Outcome (GladiatorID, Survived)
 SELECT GladiatorID, Survived
-FROM gladiators;
+FROM gladiators
+LIMIT 10000;
