@@ -90,3 +90,18 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+
+## Setup Database
+Navigate to "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
+mysql --local_infile=1 -u root -p
+set global local_infile=true;
+show global variables like 'local_infile';
+use gladiators
+load data local infile
+    -> "C:/College/Senior Year/Fall Term/CSE385/cse385-finalproject/gladiator_data.csv" into table
+    -> gladiators
+    -> fields terminated by ','
+    -> optionally enclosed by '"'
+    -> lines terminated by '\n'
+    -> ignore 1 rows;
