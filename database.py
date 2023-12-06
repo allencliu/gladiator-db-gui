@@ -53,6 +53,10 @@ def fetch_data_for_tree(tree_option):
             for row in result:
                 tree.insert("", "end", values=row)
 
+            # Update the current page label
+            update_current_page_label()
+
+
     except mysql.connector.Error as err:
         print(f"Error: {err}")
 
@@ -60,6 +64,13 @@ def fetch_data_for_tree(tree_option):
         if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
+# Function to update the current page label
+def update_current_page_label():
+    global current_offset
+    current_page = current_offset // limit + 1
+    current_page_label.config(text=f"Page: {current_page}")
+
 
 # Function to get table name from a column name
 def get_table_name(column):
@@ -101,6 +112,7 @@ def on_go_to_page():
         global current_offset
         current_offset = max(0, (page_number - 1) * limit)
         fetch_data_for_tree(selected_option)
+        go_to_page_entry.delete(0, tk.END)
     except ValueError:
         print("Invalid page number")
 
@@ -142,12 +154,18 @@ style = ttk.Style()
 style.configure("Treeview", font=("Arial", 12))  # Adjust the font family and size
 style.configure("Treeview.Heading", font=("Arial", 12))
 
-# Dropdown menu and fetch button container
-container = ttk.Frame(root)
+# Dropdown menu and fetch button nav_container
+nav_container = ttk.Frame(root)
+
+filter_container = ttk.Frame(root)
+
+filter_container.pack(pady=10)
+# Pack the Treeview
+tree.pack(expand=True, fill="both")
 
 # Dropdown menu for selecting options
 tree_options = ["Gladiator Info", "Combat Stats", "Skills", "Background Info", "Health Info", "External Factors", "Outcome"]  # Add your option names here
-tree_selector = ttk.Combobox(container, values=tree_options)
+tree_selector = ttk.Combobox(nav_container, values=tree_options)
 tree_selector.set(tree_options[0])  # Set default value
 tree_selector.pack(side="left", padx=10)
 
@@ -164,32 +182,35 @@ def on_tree_select(event):
 # Bind the event handler to the tree_selector
 tree_selector.bind("<<ComboboxSelected>>", on_tree_select)
 
-# Pack the container
-container.pack(pady=10)
+# Pack the nav_container
+nav_container.pack(pady=10)
 
-# Pack the Treeview
-tree.pack(expand=True, fill="both")
 
-# Fetch data for the initial tree
-fetch_data_for_tree(tree_selector.get())
 
 # Entry to Go to a Specific Page
-go_to_page_label = tk.Label(container, text="Go to Page:")
+go_to_page_label = tk.Label(nav_container, text="Go to Page:")
 go_to_page_label.pack(side="left", padx=5)
 
-go_to_page_entry = tk.Entry(container)
+go_to_page_entry = tk.Entry(nav_container)
 go_to_page_entry.pack(side="left", padx=5)
 
-go_to_page_button = tk.Button(container, text="Go", command=on_go_to_page)
+go_to_page_button = tk.Button(nav_container, text="Go", command=on_go_to_page)
 go_to_page_button.pack(side="left", padx=5)
 
 # Previous Button
-previous_button = tk.Button(container, text="Previous", command=on_previous)
+previous_button = tk.Button(nav_container, text="Previous", command=on_previous)
 previous_button.pack(side="left", padx=10)
 
+# Create a label to display the current page number
+current_page_label = tk.Label(nav_container, text="Page: 1")
+current_page_label.pack(side="left", padx=10)
+
 # Next Button
-next_button = tk.Button(container, text="Next", command=on_next)
+next_button = tk.Button(nav_container, text="Next", command=on_next)
 next_button.pack(side="left", padx=10)
+
+# Fetch data for the initial tree
+fetch_data_for_tree(tree_selector.get())
 
 # Run the Tkinter event loop
 root.mainloop()
