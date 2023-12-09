@@ -21,43 +21,146 @@ def create_profile():
 
     # Create a dictionary to store checkbox variables
     checkbox_vars = {}
-
+        
     # Function to generate SQL query based on selected tables
-    def generate_query():
-        query = "SELECT "
+    # def generate_query():
+    #     query = "SELECT "
+    #     selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
+
+    #     if not selected_tables:
+    #         print("Please select at least one table.")
+    #         return
+
+    #     # Add GladiatorID column for the first selected table
+    #     query += f"{selected_tables[0]}.GladiatorID, "
+        
+    #     # Add other columns for the first selected table
+    #     query += ", ".join([f"{selected_tables[0]}.{col}" for col in get_columns(selected_tables[0])])
+    #     for i in range(1, len(selected_tables)):
+    #         # Add other columns for the subsequent tables (excluding GladiatorID)
+    #         query += ", " + ", ".join([f"{selected_tables[i]}.{col}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
+    #     # Add FROM clause
+    #     query += f" FROM {selected_tables[0]}"
+    #     # Join subsequent tables using the specified condition
+
+    #     for i in range(1, len(selected_tables)):
+    #         # Add JOIN condition
+    #         query += f" JOIN {selected_tables[i]} ON {selected_tables[i-1]}.GladiatorID = {selected_tables[i]}.GladiatorID"
+    #     return query
+
+    def get_column_type(table, column):
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="&%Bn96=mdQe4",
+            database="gladiator"
+        )
+
+        cursor = connection.cursor()
+
+        # Query the information_schema to get column information
+        cursor.execute("""
+            SELECT COLUMN_TYPE
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s
+        """, (connection.database, table, column))
+
+        result = cursor.fetchone()
+
+        if result:
+            return result[0]
+        else:
+            # Default to VARCHAR if the column type is not found
+            return "VARCHAR(255)"
+    
+    def generate_create_table_query(profile_name):
+        ## Get the profile name
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
 
         if not selected_tables:
             print("Please select at least one table.")
             return
 
+        # Create a table name based on selected tables
+        
+
+        # Start building the CREATE TABLE statement
+        query = f"CREATE TABLE {profile_name} (\n"
+
+        # Add auto-incrementing primary key column
+        query += "GladiatorID INT AUTO_INCREMENT,\n"
+        # Add columns for the first selected table
+        columns = [f"{col} {get_column_type(selected_tables[0], col)}" for col in get_columns(selected_tables[0])]
+
+        for i in range(1, len(selected_tables)):
+        # Add columns for the subsequent tables (excluding GladiatorID)
+            columns.extend([f"{col} {get_column_type(selected_tables[i], col)}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
+
+        # Join columns into a single string
+        query += ",\n".join(columns)
+
+        # Add primary key constraint
+        query += f",\nPRIMARY KEY (GladiatorID)"
+
+        # Close the CREATE TABLE statement
+        query += "\n);"
+
+        return query
+
+    def generate_insert_query(profile_name):
+        query = f"INSERT INTO {profile_name} ("
+
+        selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
+
+        if not selected_tables:
+            print("Please select at least one table.")
+            return
+
+        # Add columns for the first selected table
+        columns = ["GladiatorID"]
+        columns.extend([f"{col}" for col in get_columns(selected_tables[0])])
+
+        for i in range(1, len(selected_tables)):
+            # Add columns for the subsequent tables (excluding GladiatorID)
+            columns.extend([f"{col}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
+
+        # Join columns into a single string
+        query += ", ".join(columns)
+
+        # Close column names and open the SELECT statement
+        query += ") SELECT "
+
         # Add GladiatorID column for the first selected table
         query += f"{selected_tables[0]}.GladiatorID, "
-        
+
         # Add other columns for the first selected table
         query += ", ".join([f"{selected_tables[0]}.{col}" for col in get_columns(selected_tables[0])])
         for i in range(1, len(selected_tables)):
             # Add other columns for the subsequent tables (excluding GladiatorID)
             query += ", " + ", ".join([f"{selected_tables[i]}.{col}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
+        
         # Add FROM clause
         query += f" FROM {selected_tables[0]}"
-        # Join subsequent tables using the specified condition
 
+        # Join subsequent tables using the specified condition
         for i in range(1, len(selected_tables)):
             # Add JOIN condition
             query += f" JOIN {selected_tables[i]} ON {selected_tables[i-1]}.GladiatorID = {selected_tables[i]}.GladiatorID"
+
+        # Close the SELECT statement
+        query += ";"
+
         return query
+
 
         
     # Function to get the selected tables and create the profile
     def save_profile():
-        query = generate_query()
-
+        # query = generate_query()
         ## Get the profile name
-        new_name = name_entry.get().strip()  # Strip leading and trailing whitespaces
-
+        profile_name = name_entry.get().strip()  # Strip leading and trailing whitespaces
         # Check if the profile name is empty
-        if not new_name:
+        if not profile_name:
             print("Error: Profile name cannot be blank.")
             return
 
@@ -71,21 +174,31 @@ def create_profile():
 
             if connection.is_connected():
                 mycursor = connection.cursor()
-                create_profile_table_query = "CREATE TABLE IF NOT EXISTS Profiles (ProfileName VARCHAR(24) PRIMARY KEY, SelectedTables TEXT);"
-                mycursor.execute(create_profile_table_query)
-                connection.commit()
                 # Insert the new profile into the Profiles table
-                insert_query = "INSERT INTO Profiles (ProfileName, SelectedTables) VALUES (%s, %s)"
-                data = (new_name, query)
-                print(f"Executing query: {insert_query}")
-                print(f"Data: {data}")
+                insert_query = "INSERT INTO Profiles (ProfileName) VALUES (%s);"
+                data = (profile_name,)
+                # print(f"Executing query: {insert_query}")
+                # print(f"Data: {data}")
                 mycursor.execute(insert_query, data)
                 connection.commit()
 
-                # Execute the selected tables query
+                
+                # Step 1: Generate and execute the CREATE TABLE query
+                create_table_query = generate_create_table_query(profile_name)
+                print(create_table_query)  # Print the query for debugging
+                mycursor.execute(create_table_query)
+                
+                # Step 2: Generate and execute the INSERT INTO query
+                insert_query = generate_insert_query(profile_name)
+                print(insert_query)  # Print the query for debugging
+                mycursor.execute(insert_query)
+                # Commit the changes
+                connection.commit()
+                # print(result)
+                # Fetch all columns from the table associated with the profile_name
+                query = f"SELECT * FROM gladiator.{profile_name};"
                 mycursor.execute(query)
                 result = mycursor.fetchall()
-                # print(result)
                 # Display the selected data in the Treeview
                 tree.delete(*tree.get_children())  # Clear existing data
                 columns = [desc[0] for desc in mycursor.description]
@@ -100,9 +213,9 @@ def create_profile():
                 connection.commit()
                 
                 # Update the dropdown menu with the new profile
-                profiles.append(new_name)  # Assuming the profile name is unique
+                profiles.append(profile_name)  # Assuming the profile name is unique
                 profile_dropdown['values'] = profiles
-                profile_dropdown.set(new_name)  # Set the new profile as selected
+                profile_dropdown.set(profile_name)  # Set the new profile as selected
 
                 # Update the dropdown with created profiles
                 profile_dropdown['values'] = profiles
@@ -290,36 +403,29 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
 
             mycursor = connection.cursor()
 
-            # Fetch the selected tables query from the Profiles table
-            query = f"SELECT SelectedTables FROM Profiles WHERE ProfileName = '{profile_name}';"
+            # Formulate the SELECT * query
+            query = f"SELECT * FROM gladiator.{profile_name};"
             mycursor.execute(query)
-            result = mycursor.fetchone()
+            result_data = mycursor.fetchall()
 
-            if result:
-                selected_tables_query = result[0]
+            # Clear existing data in the Treeview
+            for row in tree.get_children():
+                tree.delete(row)
 
-                # Execute the selected tables query
-                mycursor.execute(selected_tables_query)
-                result_data = mycursor.fetchall()
+            # Set column headings
+            columns = [desc[0] for desc in mycursor.description]
+            tree["columns"] = columns
+            for col in columns:
+                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, profile_name, c))
+                tree.column(col, width=100)  # Adjust the width as needed
 
-                # Clear existing data in the Treeview
-                for row in tree.get_children():
-                    tree.delete(row)
+            # Sort the records within Python
+            if sort_column and sort_column in columns:
+                result_data.sort(key=lambda x: x[columns.index(sort_column)], reverse=(sort_order == "DESC"))
 
-                # Set column headings
-                columns = [desc[0] for desc in mycursor.description]
-                tree["columns"] = columns
-                for col in columns:
-                    tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, profile_name, c))
-                    tree.column(col, width=100)  # Adjust the width as needed
-
-                # Sort the records within Python
-                if sort_column and sort_column in columns:
-                    result_data.sort(key=lambda x: x[columns.index(sort_column)], reverse=(sort_order == "DESC"))
-
-                # Insert new data into the Treeview
-                for row in result_data:
-                    tree.insert("", "end", values=row)
+            # Insert new data into the Treeview
+            for row in result_data:
+                tree.insert("", "end", values=row)
 
     except mysql.connector.Error as err:
         print(f"Error: {err}")
@@ -342,7 +448,9 @@ def fetch_profile_names():
             print("Connected to MySQL Server")
 
             mycursor = connection.cursor()
-
+            create_profile_table_query = "CREATE TABLE IF NOT EXISTS Profiles (ProfileName VARCHAR(24) PRIMARY KEY);"
+            mycursor.execute(create_profile_table_query)
+            connection.commit()
             # Fetch profile names from the Profiles table
             query = "SELECT ProfileName FROM Profiles;"
             mycursor.execute(query)
