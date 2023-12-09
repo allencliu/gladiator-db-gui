@@ -132,8 +132,6 @@ def create_profile():
             print("Select at least one table.")  # Check if this message is printed
             tk.messagebox.showerror("Error", "Select at least one table.")
             return
-
-
     
         # Check if the profile name is empty
         if not profile_name:
@@ -167,8 +165,7 @@ def create_profile():
                 insert_query = generate_insert_query(profile_name)
                 print(insert_query)  # Print the query for debugging
                 mycursor.execute(insert_query)
-                # Commit the changes
-                connection.commit()
+
                 # print(result)
                 # Fetch all columns from the table associated with the profile_name
                 query = f"SELECT * FROM gladiator.{profile_name};"
