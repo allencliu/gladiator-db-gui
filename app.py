@@ -1,3 +1,4 @@
+from tkinter import messagebox
 import mysql.connector
 import tkinter as tk
 from tkinter import ttk
@@ -54,13 +55,6 @@ def create_profile():
         ## Get the profile name
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
 
-        if not selected_tables:
-            print("Please select at least one table.")
-            return
-
-        # Create a table name based on selected tables
-        
-
         # Start building the CREATE TABLE statement
         query = f"CREATE TABLE {profile_name} (\n"
 
@@ -88,10 +82,6 @@ def create_profile():
         query = f"INSERT INTO {profile_name} ("
 
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
-
-        if not selected_tables:
-            print("Please select at least one table.")
-            return
 
         # Add columns for the first selected table
         columns = ["GladiatorID"]
@@ -136,11 +126,19 @@ def create_profile():
         # query = generate_query()
         ## Get the profile name
         profile_name = name_entry.get().strip()  # Strip leading and trailing whitespaces
-        # Check if the profile name is empty
-        if not profile_name:
-            print("Error: Profile name cannot be blank.")
+        
+        # Check if at least one table is selected
+        if not any(value.get() for value in checkbox_vars.values()):
+            print("Select at least one table.")  # Check if this message is printed
+            tk.messagebox.showerror("Error", "Select at least one table.")
             return
 
+
+    
+        # Check if the profile name is empty
+        if not profile_name:
+            messagebox.showerror("Error", "Profile name cannot be blank.")
+            return
         try:
             connection = mysql.connector.connect(
                 host=host,
