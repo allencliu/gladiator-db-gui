@@ -259,7 +259,7 @@ def fetch_data_for_tree(tree_option):
             columns = get_columns_for_tree(tree_option)
             tree["columns"] = columns
             for col in columns:
-                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, tree_option, c))
+                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, tree_option, c, False))
                 tree.column(col, width=100)  # Adjust the width as needed
 
             # Insert new data into the Treeview
@@ -294,8 +294,9 @@ def get_table_name(column):
     return None
 
 # Function to sort the Treeview
-def sort_tree(tree, tree_option, column):
+def sort_tree(tree, tree_option, column, isProfile):
     global sort_column, sort_order, current_offset
+
     # Determine the current sort order for the column
     if sort_column == column:
         sort_order = "DESC" if sort_order == "ASC" else "ASC"
@@ -303,8 +304,14 @@ def sort_tree(tree, tree_option, column):
         sort_column = column
         sort_order = "ASC"
 
-    # Fetch data for the current page
-    fetch_data_for_tree(tree_option)
+    if isProfile:
+        # Fetch and display the sorted data for the profile
+        fetch_profile_data(tree_option, sort_column, sort_order)
+    else:
+        # Fetch and display the sorted data for the specific tree option
+        # fetch_data_for_tree(tree_option)
+        fetch_data_for_tree(tree_option)
+
 
 # Update event handlers for "Next" and "Previous" buttons
 def on_next():
@@ -390,7 +397,7 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
             columns = [desc[0] for desc in mycursor.description]
             tree["columns"] = columns
             for col in columns:
-                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, profile_name, c))
+                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, profile_name, c, True))
                 tree.column(col, width=100)  # Adjust the width as needed
 
             # Sort the records within Python
@@ -461,7 +468,7 @@ tree = ttk.Treeview(root, columns=columns, show="headings")
 
 # Set up column headings with sorting capability
 for col in columns:
-    tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, selected_option, c))
+    tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, selected_option, c, False))
     tree.column(col, width=100)  # Adjust the width as needed
 
 # Configure the style for the Treeview widget
