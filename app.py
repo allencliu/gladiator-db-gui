@@ -12,7 +12,8 @@ current_offset = 0
 
 sort_column = None
 sort_order = None
-
+selected_profile = None
+is_profile = None
 
 
 # Function to create a new profile with selected tables
@@ -296,7 +297,7 @@ def get_table_name(column):
     return None
 
 # Function to sort the Treeview
-def sort_tree(tree, tree_option, column, isProfile):
+def sort_tree(tree, tree_option, column, is_profile):
     global sort_column, sort_order, current_offset
 
     # Reset sort_order to "ASC" when the column for sorting changes
@@ -309,7 +310,7 @@ def sort_tree(tree, tree_option, column, isProfile):
     # Update the sort_column to the current column
     sort_column = column
 
-    if isProfile:
+    if is_profile:
         # Fetch and display the sorted data for the profile
         fetch_profile_data(tree_option, sort_column, sort_order)
     else:
@@ -320,27 +321,37 @@ def sort_tree(tree, tree_option, column, isProfile):
 
 # Update event handlers for "Next" and "Previous" buttons
 def on_next():
-    global current_offset
+    global current_offset, is_profile
     current_offset += limit
-    fetch_data_for_tree(selected_option)
+    print(is_profile)
+    if is_profile:
+        fetch_profile_data(selected_profile)
+    else:
+        fetch_data_for_tree(selected_option)
+
 
 def on_previous():
-    global current_offset
+    global current_offset, is_profile
     current_offset = max(0, current_offset - limit)
-    fetch_data_for_tree(selected_option)
-
+    if is_profile:
+        fetch_profile_data(selected_profile)
+    else:
+        fetch_data_for_tree(selected_option)
 
 # Update event handler for "Go to Page" entry
 def on_go_to_page():
     try:
         page_number = int(go_to_page_entry.get())
-        global current_offset
+        global current_offset, is_profile
         current_offset = max(0, (page_number - 1) * limit)
-        fetch_data_for_tree(selected_option)
+        if is_profile:
+            fetch_profile_data(selected_profile)
+        else:
+            fetch_data_for_tree(selected_option)
         go_to_page_entry.delete(0, tk.END)
     except ValueError:
         print("Invalid page number")
-
+        
 # Function to get columns for a specific tree
 def get_columns_for_tree(tree_option):
     # Define your columns for each tree
@@ -376,6 +387,8 @@ def get_columns(table):
         return ("Survived",)
 
 def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
+    global current_offset
+
     try:
         connection = mysql.connector.connect(
             host=host,
@@ -389,29 +402,32 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
 
             mycursor = connection.cursor()
 
-            # Formulate the SELECT * query
-            query = f"SELECT * FROM gladiator.{profile_name};"
+            # Fetch records for the current page
+            query = f"SELECT * FROM gladiator.{profile_name} LIMIT {limit} OFFSET {current_offset};"
             mycursor.execute(query)
             result_data = mycursor.fetchall()
+
+            # Sort the records within Python
+            if sort_column and sort_column in mycursor.column_names:
+                result_data.sort(key=lambda x: x[mycursor.column_names.index(sort_column)], reverse=(sort_order == "DESC"))
 
             # Clear existing data in the Treeview
             for row in tree.get_children():
                 tree.delete(row)
 
             # Set column headings
-            columns = [desc[0] for desc in mycursor.description]
+            columns = mycursor.column_names
             tree["columns"] = columns
             for col in columns:
                 tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, profile_name, c, True))
                 tree.column(col, width=100)  # Adjust the width as needed
 
-            # Sort the records within Python
-            if sort_column and sort_column in columns:
-                result_data.sort(key=lambda x: x[columns.index(sort_column)], reverse=(sort_order == "DESC"))
-
             # Insert new data into the Treeview
             for row in result_data:
                 tree.insert("", "end", values=row)
+
+            # Update the current page label
+            update_current_page_label()
 
     except mysql.connector.Error as err:
         print(f"Error: {err}")
@@ -420,6 +436,7 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
         if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
 
 def fetch_profile_names():
     try:
@@ -450,8 +467,10 @@ def fetch_profile_names():
 
             # Optionally, select the first profile and fetch data for it
             if profile_names:
+                global selected_profile, is_profile
                 profile_dropdown.set(profile_names[0])
                 selected_profile = profile_names[0]
+                is_profile = True
                 fetch_profile_data(selected_profile)
 
     except mysql.connector.Error as err:
@@ -500,8 +519,9 @@ profile_dropdown.pack(side="left", padx=5)
 
 # Event handler for tree selection
 def on_profile_select(event):
-    global selected_profile
+    global selected_profile, is_profile
     selected_profile = profile_dropdown.get()
+    is_profile = True
     fetch_profile_data(selected_profile)
     
 profile_dropdown.bind("<<ComboboxSelected>>", on_profile_select)
@@ -528,8 +548,9 @@ selected_option = tree_options[0]  # Set the default option
 
 # Event handler for tree selection
 def on_tree_select(event):
-    global selected_option
+    global selected_option, is_profile
     selected_option = tree_selector.get()
+    is_profile = False
     fetch_data_for_tree(selected_option)
 
 # Bind the event handler to the tree_selector
