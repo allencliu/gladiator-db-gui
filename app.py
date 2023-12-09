@@ -21,32 +21,6 @@ def create_profile():
 
     # Create a dictionary to store checkbox variables
     checkbox_vars = {}
-        
-    # Function to generate SQL query based on selected tables
-    # def generate_query():
-    #     query = "SELECT "
-    #     selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
-
-    #     if not selected_tables:
-    #         print("Please select at least one table.")
-    #         return
-
-    #     # Add GladiatorID column for the first selected table
-    #     query += f"{selected_tables[0]}.GladiatorID, "
-        
-    #     # Add other columns for the first selected table
-    #     query += ", ".join([f"{selected_tables[0]}.{col}" for col in get_columns(selected_tables[0])])
-    #     for i in range(1, len(selected_tables)):
-    #         # Add other columns for the subsequent tables (excluding GladiatorID)
-    #         query += ", " + ", ".join([f"{selected_tables[i]}.{col}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
-    #     # Add FROM clause
-    #     query += f" FROM {selected_tables[0]}"
-    #     # Join subsequent tables using the specified condition
-
-    #     for i in range(1, len(selected_tables)):
-    #         # Add JOIN condition
-    #         query += f" JOIN {selected_tables[i]} ON {selected_tables[i-1]}.GladiatorID = {selected_tables[i]}.GladiatorID"
-    #     return query
 
     def get_column_type(table, column):
         connection = mysql.connector.connect(
