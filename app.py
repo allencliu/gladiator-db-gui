@@ -11,7 +11,9 @@ database = "gladiator"
 current_offset = 0
 
 sort_column = None
-sort_order = "ASC"
+sort_order = None
+
+
 
 # Function to create a new profile with selected tables
 def create_profile():
@@ -297,20 +299,23 @@ def get_table_name(column):
 def sort_tree(tree, tree_option, column, isProfile):
     global sort_column, sort_order, current_offset
 
-    # Determine the current sort order for the column
-    if sort_column == column:
-        sort_order = "DESC" if sort_order == "ASC" else "ASC"
-    else:
-        sort_column = column
+    # Reset sort_order to "ASC" when the column for sorting changes
+    if sort_column != column:
         sort_order = "ASC"
+
+    # Toggle the sort order
+    sort_order = "DESC" if sort_order == "ASC" else "ASC"
+
+    # Update the sort_column to the current column
+    sort_column = column
 
     if isProfile:
         # Fetch and display the sorted data for the profile
         fetch_profile_data(tree_option, sort_column, sort_order)
     else:
         # Fetch and display the sorted data for the specific tree option
-        # fetch_data_for_tree(tree_option)
         fetch_data_for_tree(tree_option)
+
 
 
 # Update event handlers for "Next" and "Previous" buttons
@@ -445,6 +450,7 @@ def fetch_profile_names():
 
             # Optionally, select the first profile and fetch data for it
             if profile_names:
+                profile_dropdown.set(profile_names[0])
                 selected_profile = profile_names[0]
                 fetch_profile_data(selected_profile)
 
