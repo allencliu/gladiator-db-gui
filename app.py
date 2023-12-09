@@ -55,8 +55,8 @@ def create_profile():
         ## Get the profile name
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
 
-        # Start building the CREATE TABLE statement
-        query = f"CREATE TABLE {profile_name} (\n"
+        query = "CREATE TABLE %s (\n"  # Use %s as a placeholder for the profile_name
+        params = (profile_name,)
 
         # Add auto-incrementing primary key column
         query += "GladiatorID INT AUTO_INCREMENT,\n"
@@ -75,11 +75,13 @@ def create_profile():
 
         # Close the CREATE TABLE statement
         query += "\n);"
-
-        return query
+        
+        return query, params
 
     def generate_insert_query(profile_name):
-        query = f"INSERT INTO {profile_name} ("
+        query = "INSERT INTO %s ("  # Use %s as a placeholder for the profile_name
+        params = (profile_name,)
+
 
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
 
@@ -117,7 +119,7 @@ def create_profile():
         # Close the SELECT statement
         query += ";"
 
-        return query
+        return query, params
 
 
         
@@ -153,23 +155,24 @@ def create_profile():
                 # print(f"Executing query: {insert_query}")
                 # print(f"Data: {data}")
                 mycursor.execute(insert_query, data)
-                connection.commit()
+                # connection.commit()
 
                 
                 # Step 1: Generate and execute the CREATE TABLE query
-                create_table_query = generate_create_table_query(profile_name)
+                create_table_query, create_table_params = generate_create_table_query(profile_name)
                 print(create_table_query)  # Print the query for debugging
-                mycursor.execute(create_table_query)
+                mycursor.execute(create_table_query, create_table_params)
                 
                 # Step 2: Generate and execute the INSERT INTO query
-                insert_query = generate_insert_query(profile_name)
+                insert_query, insert_table_params = generate_insert_query(profile_name)
                 print(insert_query)  # Print the query for debugging
-                mycursor.execute(insert_query)
+                mycursor.execute(insert_query, insert_table_params)
 
                 # print(result)
                 # Fetch all columns from the table associated with the profile_name
-                query = f"SELECT * FROM gladiator.{profile_name};"
-                mycursor.execute(query)
+                query = "SELECT * FROM gladiator.%s;"
+                mycursor.execute(query, (profile_name,))
+
                 result = mycursor.fetchall()
                 # Display the selected data in the Treeview
                 tree.delete(*tree.get_children())  # Clear existing data
