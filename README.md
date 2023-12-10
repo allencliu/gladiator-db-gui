@@ -36,11 +36,11 @@ To set up the database for your project, follow these steps:
     use gladiator;
     ```
 
-7. Load data from the CSV file into the `gladiators` table:
+7. Load data from the CSV file from `filepath:/gladiator_data.csv` into the `gladiators` table:
 
     ```sql
     load data local infile
-    "C:/College/Senior Year/Fall Term/CSE385/cse385-finalproject/gladiator_data.csv" into table
+    "~/gladiator_data.csv" into table
     gladiators
     fields terminated by ','
     optionally enclosed by '"'
@@ -106,3 +106,11 @@ mysql -u root -p gladiator < creategladiatortables.sql
 
 ### 6. Change View
 - Use the dropdown menu to select different views, such as "Gladiator Info," "Combat Stats," etc.
+
+### 7. Sorting
+- Click on the columns in the table to toggle between ascending and descending order.
+
+# References
+"Chapter&nbsp;1&nbsp;Introduction to MySQL Connector/Python." MySQL, dev.mysql.com/doc/connector-python/en/connector-python-introduction.html. Accessed 10 Dec. 2023. 
+Therrien, Anthony. “Gladiator Combat Records and Profiles Dataset." Kaggle, 25 Nov. 2023, www.kaggle.com/datasets/anthonytherrien/gladiator-combat-records-and-profiles-dataset. 
+"Tkinter - Python Interface to TCL/TK." Python Documentation, docs.python.org/3/library/tkinter.html. Accessed 10 Dec. 2023. 
