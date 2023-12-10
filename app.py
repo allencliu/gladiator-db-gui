@@ -1,3 +1,4 @@
+import re
 from tkinter import messagebox
 import mysql.connector
 import tkinter as tk
@@ -52,11 +53,10 @@ def create_profile():
             return "VARCHAR(255)"
     
     def generate_create_table_query(profile_name):
-        ## Get the profile name
+        # Get the profile name
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
 
-        query = "CREATE TABLE %s (\n"  # Use %s as a placeholder for the profile_name
-        params = (profile_name,)
+        query = f"CREATE TABLE {profile_name} (\n"  # Use %s as a placeholder for the profile_name
 
         # Add auto-incrementing primary key column
         query += "GladiatorID INT AUTO_INCREMENT,\n"
@@ -76,11 +76,10 @@ def create_profile():
         # Close the CREATE TABLE statement
         query += "\n);"
         
-        return query, params
+        return query
 
     def generate_insert_query(profile_name):
-        query = "INSERT INTO %s ("  # Use %s as a placeholder for the profile_name
-        params = (profile_name,)
+        query = f"INSERT INTO {profile_name} ("
 
 
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
@@ -119,14 +118,14 @@ def create_profile():
         # Close the SELECT statement
         query += ";"
 
-        return query, params
+        return query
 
 
         
     # Function to get the selected tables and create the profile
     def save_profile():
         # query = generate_query()
-        ## Get the profile name
+        # Get the profile name
         profile_name = name_entry.get().strip()  # Strip leading and trailing whitespaces
         
         # Check if at least one table is selected
@@ -138,6 +137,16 @@ def create_profile():
         # Check if the profile name is empty
         if not profile_name:
             messagebox.showerror("Error", "Profile name cannot be blank.")
+            return
+        
+        # Check if the profile name already exists in the list
+        if profile_name in profiles:
+            messagebox.showerror("Error", f"Profile name '{profile_name}' already exists. Choose a different name.")
+            return
+            
+        # Check if the profile name follows the allowed naming convention
+        if not re.match("^[a-zA-Z0-9_]+$", profile_name):
+            messagebox.showerror("Error", "Invalid profile name. Use only alphanumeric characters and underscores.")
             return
         try:
             connection = mysql.connector.connect(
@@ -151,36 +160,29 @@ def create_profile():
                 mycursor = connection.cursor()
                 # Insert the new profile into the Profiles table
                 insert_query = "INSERT INTO Profiles (ProfileName) VALUES (%s);"
-                data = (profile_name,)
-                # print(f"Executing query: {insert_query}")
-                # print(f"Data: {data}")
-                mycursor.execute(insert_query, data)
-                # connection.commit()
+                mycursor.execute(insert_query, (profile_name,))
 
                 
-                # Step 1: Generate and execute the CREATE TABLE query
-                create_table_query, create_table_params = generate_create_table_query(profile_name)
-                print(create_table_query)  # Print the query for debugging
-                mycursor.execute(create_table_query, create_table_params)
-                
+                # Generate and execute the CREATE TABLE query
+                create_table_query= generate_create_table_query(profile_name)
+
+                mycursor.execute(create_table_query)
                 # Step 2: Generate and execute the INSERT INTO query
-                insert_query, insert_table_params = generate_insert_query(profile_name)
-                print(insert_query)  # Print the query for debugging
-                mycursor.execute(insert_query, insert_table_params)
+                insert_query = generate_insert_query(profile_name)
+                mycursor.execute(insert_query)
 
-                # print(result)
                 # Fetch all columns from the table associated with the profile_name
-                query = "SELECT * FROM gladiator.%s;"
-                mycursor.execute(query, (profile_name,))
-
+                query = f"SELECT * FROM gladiator.{profile_name};"
+                mycursor.execute(query)
                 result = mycursor.fetchall()
+                
                 # Display the selected data in the Treeview
                 tree.delete(*tree.get_children())  # Clear existing data
                 columns = [desc[0] for desc in mycursor.description]
                 tree["columns"] = columns
                 for col in columns:
                     tree.heading(col, text=col)
-                    tree.column(col, width=100)  # Adjust the width as needed
+                    tree.column(col, width=100)
 
                 for row in result:
                     tree.insert("", "end", values=row)
@@ -192,11 +194,11 @@ def create_profile():
                 profile_dropdown['values'] = profiles
                 profile_dropdown.set(profile_name)  # Set the new profile as selected
 
-                # Update the dropdown with created profiles
-                profile_dropdown['values'] = profiles
-
                 # Close the profile creation window
                 create_profile_window.destroy()
+                fetch_profile_names()
+                messagebox.showinfo("Success", f"Profile '{selected_profile}' created successfully.")
+
 
         except mysql.connector.Error as err:
             print(f"Error: {err}")
@@ -206,7 +208,7 @@ def create_profile():
                 connection.close()
                 print("Connection closed")
 
-    # Create checkboxes for each table, including GladiatorInfo
+    # Create checkboxes for each table
     for table in ["GladiatorInfo", "CombatStats", "Skills", "BackgroundInfo", "HealthInfo", "ExternalFactors", "Outcome"]:
         var = tk.IntVar()
         checkbox_vars[table] = var
@@ -478,7 +480,117 @@ def fetch_profile_names():
         if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
-            
+
+def delete_table():
+    try:
+        # Get the selected profile from the dropdown
+        selected_profile = profile_dropdown.get()
+
+        if not selected_profile:
+            messagebox.showerror("Error", "Select a profile to delete.")
+            return
+
+        confirmation = messagebox.askquestion("Confirmation", f"Do you really want to delete the profile '{selected_profile}'?")
+
+        if confirmation == 'yes':
+            # Connect to the database
+            connection = mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=database
+            )
+
+            if connection.is_connected():
+                mycursor = connection.cursor()
+
+                # Drop the table associated with the selected profile
+                drop_table_query = f"DROP TABLE IF EXISTS {selected_profile};"
+                mycursor.execute(drop_table_query)
+
+                # Check if the selected profile is in the list before removing it
+                if selected_profile in profiles:
+                    profiles.remove(selected_profile)
+
+                # Set a default value for the profile dropdown
+                profile_dropdown.set(profiles[0] if profiles else "")
+
+                # Update the dropdown with the remaining profiles
+                profile_dropdown['values'] = profiles
+
+                # Delete the row from the Profiles table
+                delete_profile_query = "DELETE FROM Profiles WHERE ProfileName = %s;"
+                mycursor.execute(delete_profile_query, (selected_profile,))
+                # Clear the Treeview
+                tree.delete(*tree.get_children())
+                connection.commit()
+                fetch_profile_names()
+                messagebox.showinfo("Success", f"Profile '{selected_profile}' deleted successfully.")
+
+    except mysql.connector.Error as err:
+        messagebox.showerror("Error", f"Error: {err}")
+
+    finally:
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+            print("Connection closed")
+
+def global_search(query):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        if connection.is_connected():
+            mycursor = connection.cursor()
+            global is_profile, selected_option
+            # Determine the table to search based on the is_profile flag
+            selected_table = selected_profile if is_profile else selected_option.replace(" ", "")
+            # Construct a dynamic SQL query for global search
+            search_query = f"SELECT * FROM gladiator.{selected_table} WHERE "
+            search_conditions = []
+
+            # Fetch the columns for the selected table
+            mycursor.execute(f"SELECT * FROM gladiator.{selected_table} LIMIT 1")
+            columns = [col[0] for col in mycursor.description]
+            for col in columns:
+                search_conditions.append(f"{col} LIKE %s")
+
+            mycursor.fetchall()  # Fetch the result of the DESCRIBE query
+
+            search_query += " OR ".join(search_conditions)
+            search_query += f" LIMIT {limit} OFFSET {current_offset}"
+
+            mycursor.execute(search_query, tuple(f"%{query}%" for _ in range(len(columns))))
+            result = mycursor.fetchall()
+
+            # Clear existing data in the Treeview
+            for row in tree.get_children():
+                tree.delete(row)
+
+            # Set column headings
+            tree["columns"] = columns
+            for col in columns:
+                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, selected_table, c, True))
+                tree.column(col, width=100)  # Adjust the width as needed
+
+            # Insert new data into the Treeview
+            for row in result:
+                tree.insert("", "end", values=row)
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+
+    finally:
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+            print("Connection closed")
+
+
+
 # Create the main Tkinter window
 root = tk.Tk()
 root.title("Gladiator Index")
@@ -525,8 +637,24 @@ def on_profile_select(event):
 profile_dropdown.bind("<<ComboboxSelected>>", on_profile_select)
 
 # Create a button for profile creation
-create_profile_button = tk.Button(filter_container, text="Create Profile", command=create_profile)
+create_profile_button = tk.Button(filter_container, text="Create Profile", command=lambda: create_profile())
 create_profile_button.pack(side="left", padx=10)
+
+delete_table_button = tk.Button(filter_container, text="Delete Profile", command=lambda: delete_table())
+delete_table_button.pack(side="left", padx=10)
+
+# Add an entry widget for global search
+search_entry = tk.Entry(filter_container)
+search_entry.pack(side="left", padx=5)
+
+# Event handler for global search
+def on_global_search():
+    query = search_entry.get()
+    global_search(query)
+    
+# Button for global search
+global_search_button = tk.Button(filter_container, text="Search", command=on_global_search)
+global_search_button.pack(side="left", padx=5)
 
 filter_container.pack(pady=10)
 
@@ -556,8 +684,6 @@ tree_selector.bind("<<ComboboxSelected>>", on_tree_select)
 
 # Pack the nav_container
 nav_container.pack(pady=10)
-
-
 
 # Entry to Go to a Specific Page
 go_to_page_label = tk.Label(nav_container, text="Go to Page:")
