@@ -56,10 +56,10 @@ To set up the database for your project, follow these steps:
     ignore 1 rows;
     ```
 
-### Running Additional SQL Scripts
-```bash
-mysql -u root -p gladiator < creategladiatortables.sql
-```
+9. Run the additional SQL script:
+    ```bash
+    mysql -u root -p gladiator < creategladiatortables.sql
+    ```
 
 # Gladiator Index Application
 
