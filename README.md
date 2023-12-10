@@ -1,6 +1,8 @@
 # CSE385-FinalProject
 
-## Setup Database
+## Prerequisites
+
+### Setup Database
 To set up the database for your project, follow these steps:
 
 1. Navigate to "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
@@ -46,9 +48,61 @@ To set up the database for your project, follow these steps:
     ignore 1 rows;
     ```
 
-## Running Initial SQL
+### Running Initial SQL
 
 Now, run the initial SQL script to create the `gladiators` table. Execute the following command:
 
 ```bash
 mysql -u root -p gladiator < initial.sql
+```
+
+### Running Additional SQL Scripts
+```bash
+mysql -u root -p gladiator < creategladiatortables.sql
+```
+
+# Gladiator Index Application
+
+**Instructions for Running the Application**
+
+## Prerequisites
+1. Make sure you have Python installed on your system.
+2. Install the required packages using the following command:
+    ```pip install -r requirements.txt```
+
+## Configuration
+1. Ensure you have a MySQL server installed and running.
+2. Update the database connection details in the code:
+- Host: "localhost"
+- User: "root"
+- Password: `password`
+- Database: "gladiator"
+
+## Usage Instructions
+
+### 1. Run the Executable
+- Locate the `app.exe` file in the `dist` folder.
+- Double-click on `app.exe` to run the application.
+- Optional: The executable may be broken after configuring, so you may need to run `app.py` instead after reconfiguring the connection details.
+
+### 2. Create a New Profile
+- Click on the "Create Profile" button.
+- In the popup window, select the tables you want to include in the profile by checking the checkboxes.
+- Enter a unique profile name.
+- Click the "Save" button.
+
+### 3. Delete a Profile
+- Select the profile you want to delete from the dropdown menu.
+- Click the "Delete Profile" button.
+- Confirm the deletion.
+
+### 4. Search
+- Enter a search query in the "Search" entry.
+- Click the "Search" button to find matching records across all tables.
+
+### 5. Navigate Through Pages
+- Use the "Next" and "Previous" buttons to navigate between pages of data.
+- Enter a page number in the "Go to Page" entry and click the "Go" button to jump to a specific page.
+
+### 6. Change View
+- Use the dropdown menu to select different views, such as "Gladiator Info," "Combat Stats," etc.

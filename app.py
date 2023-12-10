@@ -687,10 +687,69 @@ def global_search(query):
 
 
 # Create the main Tkinter window
+# root = tk.Tk()
+# root.title("Gladiator Index")
 root = tk.Tk()
 root.title("Gladiator Index")
-
 root.geometry("1600x900")
+    
+# def initialize_main_app():
+#     # Create the main Tkinter window
+    
+
+#     # Run the Tkinter event loop
+    
+# def authenticate(username, password):
+#     try:
+#         connection = mysql.connector.connect(
+#             host=host, user=username, password=password, database=database
+#         )
+
+#         if connection.is_connected():
+#             messagebox.showinfo("Success", "Login Successful!")
+#             connection.close()
+#             return True
+
+#     except mysql.connector.Error as err:
+#         messagebox.showerror("Error", f"Authentication Error: {err}")
+
+#     return False
+
+# def login():
+#     global user, password
+#     login_window = tk.Tk()
+#     login_window.title("Login")
+
+#     # Label and entry for username
+#     username_label = tk.Label(login_window, text="Username:")
+#     username_label.pack(pady=10)
+#     username_entry = tk.Entry(login_window)
+#     username_entry.pack(pady=5)
+
+#     # Label and entry for password
+#     password_label = tk.Label(login_window, text="Password:")
+#     password_label.pack(pady=10)
+#     password_entry = tk.Entry(login_window, show="*")
+#     password_entry.pack(pady=5)
+
+#     def authenticate_and_open_main_window():
+#         user = username_entry.get()
+#         password = password_entry.get()
+#         print(user, password)
+#         if authenticate(user, password):
+#             login_window.destroy()
+#             initialize_main_app()
+#             pass
+#         else:
+#             login_window.update()
+#     # Button to submit login credentials
+#     login_button = tk.Button(login_window, text="Login", command=authenticate_and_open_main_window)
+#     login_button.pack(pady=10)
+
+#     login_window.mainloop()
+    
+# Create the login window first
+# login()
 
 # Create a Treeview widget to display data
 columns = ("GladiatorID", "Name", "Age", "BirthYear", "Origin", "Height", "Weight")
@@ -827,5 +886,4 @@ next_button.pack(side="left", padx=10)
 fetch_data_for_tree(tree_selector.get())
 fetch_profile_names()
 
-# Run the Tkinter event loop
 root.mainloop()
