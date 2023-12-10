@@ -56,9 +56,9 @@ To set up the database for your project, follow these steps:
     ignore 1 rows;
     ```
 
-9. Run the additional SQL script:
+9. Run the additional SQL script in the other Command Prompt window:
     ```bash
-    mysql -u root -p gladiator < creategladiatortables.sql
+    mysql -u root -p gladiator < path/to/creategladiatortables.sql
     ```
 
 # Gladiator Index Application
