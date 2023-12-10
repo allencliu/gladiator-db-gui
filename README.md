@@ -10,10 +10,10 @@ To set up the database for your project, follow these steps:
     mysql --local_infile=1 -u root -p
     ```
 
-3. Create the `gladiator` schema/database:
+3. Verify the local_infile setting:
 
     ```sql
-    create database gladiator;
+    show global variables like 'local_infile';
     ```
 
 4. Set global local_infile to true:
@@ -22,10 +22,10 @@ To set up the database for your project, follow these steps:
     set global local_infile=true;
     ```
 
-5. Verify the local_infile setting:
+5. Create the `gladiator` schema/database:
 
     ```sql
-    show global variables like 'local_infile';
+    create database gladiator;
     ```
 
 6. Use the `gladiator` database:
