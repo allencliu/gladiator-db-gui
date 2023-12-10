@@ -10,25 +10,31 @@ To set up the database for your project, follow these steps:
     mysql --local_infile=1 -u root -p
     ```
 
-3. Set global local_infile to true:
+3. Create the `gladiator` schema/database:
+
+    ```sql
+    create database gladiator;
+    ```
+
+4. Set global local_infile to true:
 
     ```sql
     set global local_infile=true;
     ```
 
-4. Verify the local_infile setting:
+5. Verify the local_infile setting:
 
     ```sql
     show global variables like 'local_infile';
     ```
 
-5. Use the `gladiator` database:
+6. Use the `gladiator` database:
 
     ```sql
     use gladiator;
     ```
 
-6. Load data from the CSV file into the `gladiators` table:
+7. Load data from the CSV file into the `gladiators` table:
 
     ```sql
     load data local infile
