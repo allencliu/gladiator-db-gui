@@ -29,20 +29,20 @@ def create_profile():
 
     def get_column_type(table, column):
         connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="&%Bn96=mdQe4",
-            database="gladiator"
+            host="localhost", user="root", password="&%Bn96=mdQe4", database="gladiator"
         )
 
         cursor = connection.cursor()
 
         # Query the information_schema to get column information
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COLUMN_TYPE
             FROM information_schema.COLUMNS
             WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s
-        """, (connection.database, table, column))
+        """,
+            (connection.database, table, column),
+        )
 
         result = cursor.fetchone()
 
@@ -51,7 +51,7 @@ def create_profile():
         else:
             # Default to VARCHAR if the column type is not found
             return "VARCHAR(255)"
-    
+
     def generate_create_table_query(profile_name):
         # Get the profile name
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
@@ -61,11 +61,20 @@ def create_profile():
         # Add auto-incrementing primary key column
         query += "GladiatorID INT AUTO_INCREMENT,\n"
         # Add columns for the first selected table
-        columns = [f"{col} {get_column_type(selected_tables[0], col)}" for col in get_columns(selected_tables[0])]
+        columns = [
+            f"{col} {get_column_type(selected_tables[0], col)}"
+            for col in get_columns(selected_tables[0])
+        ]
 
         for i in range(1, len(selected_tables)):
-        # Add columns for the subsequent tables (excluding GladiatorID)
-            columns.extend([f"{col} {get_column_type(selected_tables[i], col)}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
+            # Add columns for the subsequent tables (excluding GladiatorID)
+            columns.extend(
+                [
+                    f"{col} {get_column_type(selected_tables[i], col)}"
+                    for col in get_columns(selected_tables[i])
+                    if col != "GladiatorID"
+                ]
+            )
 
         # Join columns into a single string
         query += ",\n".join(columns)
@@ -75,12 +84,11 @@ def create_profile():
 
         # Close the CREATE TABLE statement
         query += "\n);"
-        
+
         return query
 
     def generate_insert_query(profile_name):
         query = f"INSERT INTO {profile_name} ("
-
 
         selected_tables = [table for table, var in checkbox_vars.items() if var.get()]
 
@@ -90,7 +98,13 @@ def create_profile():
 
         for i in range(1, len(selected_tables)):
             # Add columns for the subsequent tables (excluding GladiatorID)
-            columns.extend([f"{col}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
+            columns.extend(
+                [
+                    f"{col}"
+                    for col in get_columns(selected_tables[i])
+                    if col != "GladiatorID"
+                ]
+            )
 
         # Join columns into a single string
         query += ", ".join(columns)
@@ -102,11 +116,19 @@ def create_profile():
         query += f"{selected_tables[0]}.GladiatorID, "
 
         # Add other columns for the first selected table
-        query += ", ".join([f"{selected_tables[0]}.{col}" for col in get_columns(selected_tables[0])])
+        query += ", ".join(
+            [f"{selected_tables[0]}.{col}" for col in get_columns(selected_tables[0])]
+        )
         for i in range(1, len(selected_tables)):
             # Add other columns for the subsequent tables (excluding GladiatorID)
-            query += ", " + ", ".join([f"{selected_tables[i]}.{col}" for col in get_columns(selected_tables[i]) if col != "GladiatorID"])
-        
+            query += ", " + ", ".join(
+                [
+                    f"{selected_tables[i]}.{col}"
+                    for col in get_columns(selected_tables[i])
+                    if col != "GladiatorID"
+                ]
+            )
+
         # Add FROM clause
         query += f" FROM {selected_tables[0]}"
 
@@ -120,40 +142,43 @@ def create_profile():
 
         return query
 
-
-        
     # Function to get the selected tables and create the profile
     def save_profile():
         # query = generate_query()
         # Get the profile name
-        profile_name = name_entry.get().strip()  # Strip leading and trailing whitespaces
-        
+        profile_name = (
+            name_entry.get().strip()
+        )  # Strip leading and trailing whitespaces
+
         # Check if at least one table is selected
         if not any(value.get() for value in checkbox_vars.values()):
             print("Select at least one table.")  # Check if this message is printed
             tk.messagebox.showerror("Error", "Select at least one table.")
             return
-    
+
         # Check if the profile name is empty
         if not profile_name:
             messagebox.showerror("Error", "Profile name cannot be blank.")
             return
-        
+
         # Check if the profile name already exists in the list
         if profile_name in profiles:
-            messagebox.showerror("Error", f"Profile name '{profile_name}' already exists. Choose a different name.")
+            messagebox.showerror(
+                "Error",
+                f"Profile name '{profile_name}' already exists. Choose a different name.",
+            )
             return
-            
+
         # Check if the profile name follows the allowed naming convention
         if not re.match("^[a-zA-Z0-9_]+$", profile_name):
-            messagebox.showerror("Error", "Invalid profile name. Use only alphanumeric characters and underscores.")
+            messagebox.showerror(
+                "Error",
+                "Invalid profile name. Use only alphanumeric characters and underscores.",
+            )
             return
         try:
             connection = mysql.connector.connect(
-                host=host,
-                user=user,
-                password=password,
-                database=database
+                host=host, user=user, password=password, database=database
             )
 
             if connection.is_connected():
@@ -162,9 +187,8 @@ def create_profile():
                 insert_query = "INSERT INTO Profiles (ProfileName) VALUES (%s);"
                 mycursor.execute(insert_query, (profile_name,))
 
-                
                 # Generate and execute the CREATE TABLE query
-                create_table_query= generate_create_table_query(profile_name)
+                create_table_query = generate_create_table_query(profile_name)
 
                 mycursor.execute(create_table_query)
                 # Step 2: Generate and execute the INSERT INTO query
@@ -175,7 +199,7 @@ def create_profile():
                 query = f"SELECT * FROM gladiator.{profile_name};"
                 mycursor.execute(query)
                 result = mycursor.fetchall()
-                
+
                 # Display the selected data in the Treeview
                 tree.delete(*tree.get_children())  # Clear existing data
                 columns = [desc[0] for desc in mycursor.description]
@@ -188,28 +212,37 @@ def create_profile():
                     tree.insert("", "end", values=row)
 
                 connection.commit()
-                
+
                 # Update the dropdown menu with the new profile
                 profiles.append(profile_name)  # Assuming the profile name is unique
-                profile_dropdown['values'] = profiles
+                profile_dropdown["values"] = profiles
                 profile_dropdown.set(profile_name)  # Set the new profile as selected
 
                 # Close the profile creation window
                 create_profile_window.destroy()
                 fetch_profile_names()
-                messagebox.showinfo("Success", f"Profile '{selected_profile}' created successfully.")
-
+                messagebox.showinfo(
+                    "Success", f"Profile '{selected_profile}' created successfully."
+                )
 
         except mysql.connector.Error as err:
             print(f"Error: {err}")
 
         finally:
-            if 'connection' in locals() and connection.is_connected():
+            if "connection" in locals() and connection.is_connected():
                 connection.close()
                 print("Connection closed")
 
     # Create checkboxes for each table
-    for table in ["GladiatorInfo", "CombatStats", "Skills", "BackgroundInfo", "HealthInfo", "ExternalFactors", "Outcome"]:
+    for table in [
+        "GladiatorInfo",
+        "CombatStats",
+        "Skills",
+        "BackgroundInfo",
+        "HealthInfo",
+        "ExternalFactors",
+        "Outcome",
+    ]:
         var = tk.IntVar()
         checkbox_vars[table] = var
         checkbox = tk.Checkbutton(create_profile_window, text=table, variable=var)
@@ -226,18 +259,13 @@ def create_profile():
     save_button.pack()
 
 
-
-
 # Function to fetch data for a specific tree with pagination and sorting
 def fetch_data_for_tree(tree_option):
     global current_offset
 
     try:
         connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
+            host=host, user=user, password=password, database=database
         )
 
         if connection.is_connected():
@@ -252,7 +280,12 @@ def fetch_data_for_tree(tree_option):
 
             # Sort the records within Python
             if sort_column and sort_column in get_columns_for_tree(tree_option):
-                result.sort(key=lambda x: x[get_columns_for_tree(tree_option).index(sort_column)], reverse=(sort_order == "DESC"))
+                result.sort(
+                    key=lambda x: x[
+                        get_columns_for_tree(tree_option).index(sort_column)
+                    ],
+                    reverse=(sort_order == "DESC"),
+                )
 
             # Clear existing data in the Treeview
             for row in tree.get_children():
@@ -262,7 +295,11 @@ def fetch_data_for_tree(tree_option):
             columns = get_columns_for_tree(tree_option)
             tree["columns"] = columns
             for col in columns:
-                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, tree_option, c, False))
+                tree.heading(
+                    col,
+                    text=col,
+                    command=lambda c=col: sort_tree(tree, tree_option, c, False),
+                )
                 tree.column(col, width=100)  # Adjust the width as needed
 
             # Insert new data into the Treeview
@@ -272,14 +309,14 @@ def fetch_data_for_tree(tree_option):
             # Update the current page label
             update_current_page_label()
 
-
     except mysql.connector.Error as err:
         print(f"Error: {err}")
 
     finally:
-        if 'connection' in locals() and connection.is_connected():
+        if "connection" in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
 
 # Function to update the current page label
 def update_current_page_label():
@@ -295,6 +332,7 @@ def get_table_name(column):
             if column in get_columns_for_tree(table_option):
                 return table_option
     return None
+
 
 # Function to sort the Treeview
 def sort_tree(tree, tree_option, column, is_profile):
@@ -318,7 +356,6 @@ def sort_tree(tree, tree_option, column, is_profile):
         fetch_data_for_tree(tree_option)
 
 
-
 # Update event handlers for "Next" and "Previous" buttons
 def on_next():
     global current_offset, is_profile
@@ -338,6 +375,7 @@ def on_previous():
     else:
         fetch_data_for_tree(selected_option)
 
+
 # Update event handler for "Go to Page" entry
 def on_go_to_page():
     try:
@@ -351,7 +389,8 @@ def on_go_to_page():
         go_to_page_entry.delete(0, tk.END)
     except ValueError:
         print("Invalid page number")
-        
+
+
 # Function to get columns for a specific tree
 def get_columns_for_tree(tree_option):
     # Define your columns for each tree
@@ -360,41 +399,85 @@ def get_columns_for_tree(tree_option):
     elif tree_option == "Combat Stats":
         return ("GladiatorID", "Category", "Wins", "Losses")
     elif tree_option == "Skills":
-        return ("GladiatorID", "SpecialSkills", "WeaponOfChoice", "BattleStrategy", "CrowdAppealTechniques", "TacticalKnowledge")
+        return (
+            "GladiatorID",
+            "SpecialSkills",
+            "WeaponOfChoice",
+            "BattleStrategy",
+            "CrowdAppealTechniques",
+            "TacticalKnowledge",
+        )
     elif tree_option == "Background Info":
-        return ("GladiatorID", "PreviousOccupation", "TrainingIntensity", "BattleExperience", "PersonalMotivation", "AllegianceNetwork")
+        return (
+            "GladiatorID",
+            "PreviousOccupation",
+            "TrainingIntensity",
+            "BattleExperience",
+            "PersonalMotivation",
+            "AllegianceNetwork",
+        )
     elif tree_option == "Health Info":
-        return ("GladiatorID", "InjuryHistory", "MentalResilience", "DietAndNutrition", "PsychologicalProfile", "HealthStatus")
+        return (
+            "GladiatorID",
+            "InjuryHistory",
+            "MentalResilience",
+            "DietAndNutrition",
+            "PsychologicalProfile",
+            "HealthStatus",
+        )
     elif tree_option == "External Factors":
-        return ("GladiatorID", "EquipmentQuality", "PatronWealth", "PublicFavor", "SocialStanding")
+        return (
+            "GladiatorID",
+            "EquipmentQuality",
+            "PatronWealth",
+            "PublicFavor",
+            "SocialStanding",
+        )
     elif tree_option == "Outcome":
         return ("GladiatorID", "Survived")
-    
+
+
 def get_columns(table):
     if table == "GladiatorInfo":
         return ("Name", "Age", "BirthYear", "Origin", "Height", "Weight")
     elif table == "CombatStats":
         return ("Category", "Wins", "Losses")
     elif table == "Skills":
-        return ("SpecialSkills", "WeaponOfChoice", "BattleStrategy", "CrowdAppealTechniques", "TacticalKnowledge")
+        return (
+            "SpecialSkills",
+            "WeaponOfChoice",
+            "BattleStrategy",
+            "CrowdAppealTechniques",
+            "TacticalKnowledge",
+        )
     elif table == "BackgroundInfo":
-        return ("PreviousOccupation", "TrainingIntensity", "BattleExperience", "PersonalMotivation", "AllegianceNetwork")
+        return (
+            "PreviousOccupation",
+            "TrainingIntensity",
+            "BattleExperience",
+            "PersonalMotivation",
+            "AllegianceNetwork",
+        )
     elif table == "HealthInfo":
-        return ("InjuryHistory", "MentalResilience", "DietAndNutrition", "PsychologicalProfile", "HealthStatus")
+        return (
+            "InjuryHistory",
+            "MentalResilience",
+            "DietAndNutrition",
+            "PsychologicalProfile",
+            "HealthStatus",
+        )
     elif table == "ExternalFactors":
         return ("EquipmentQuality", "PatronWealth", "PublicFavor", "SocialStanding")
     elif table == "Outcome":
         return ("Survived",)
+
 
 def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
     global current_offset
 
     try:
         connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
+            host=host, user=user, password=password, database=database
         )
 
         if connection.is_connected():
@@ -409,7 +492,10 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
 
             # Sort the records within Python
             if sort_column and sort_column in mycursor.column_names:
-                result_data.sort(key=lambda x: x[mycursor.column_names.index(sort_column)], reverse=(sort_order == "DESC"))
+                result_data.sort(
+                    key=lambda x: x[mycursor.column_names.index(sort_column)],
+                    reverse=(sort_order == "DESC"),
+                )
 
             # Clear existing data in the Treeview
             for row in tree.get_children():
@@ -419,7 +505,11 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
             columns = mycursor.column_names
             tree["columns"] = columns
             for col in columns:
-                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, profile_name, c, True))
+                tree.heading(
+                    col,
+                    text=col,
+                    command=lambda c=col: sort_tree(tree, profile_name, c, True),
+                )
                 tree.column(col, width=100)  # Adjust the width as needed
 
             # Insert new data into the Treeview
@@ -433,7 +523,7 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
         print(f"Error: {err}")
 
     finally:
-        if 'connection' in locals() and connection.is_connected():
+        if "connection" in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
 
@@ -441,10 +531,7 @@ def fetch_profile_data(profile_name, sort_column=None, sort_order="ASC"):
 def fetch_profile_names():
     try:
         connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
+            host=host, user=user, password=password, database=database
         )
 
         if connection.is_connected():
@@ -463,7 +550,7 @@ def fetch_profile_names():
             profile_names = [row[0] for row in result]
 
             # Update the profile dropdown with profile names
-            profile_dropdown['values'] = profile_names
+            profile_dropdown["values"] = profile_names
 
             # Optionally, select the first profile and fetch data for it
             if profile_names:
@@ -477,9 +564,10 @@ def fetch_profile_names():
         print(f"Error: {err}")
 
     finally:
-        if 'connection' in locals() and connection.is_connected():
+        if "connection" in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
 
 def delete_table():
     try:
@@ -490,15 +578,15 @@ def delete_table():
             messagebox.showerror("Error", "Select a profile to delete.")
             return
 
-        confirmation = messagebox.askquestion("Confirmation", f"Do you really want to delete the profile '{selected_profile}'?")
+        confirmation = messagebox.askquestion(
+            "Confirmation",
+            f"Do you really want to delete the profile '{selected_profile}'?",
+        )
 
-        if confirmation == 'yes':
+        if confirmation == "yes":
             # Connect to the database
             connection = mysql.connector.connect(
-                host=host,
-                user=user,
-                password=password,
-                database=database
+                host=host, user=user, password=password, database=database
             )
 
             if connection.is_connected():
@@ -516,7 +604,7 @@ def delete_table():
                 profile_dropdown.set(profiles[0] if profiles else "")
 
                 # Update the dropdown with the remaining profiles
-                profile_dropdown['values'] = profiles
+                profile_dropdown["values"] = profiles
 
                 # Delete the row from the Profiles table
                 delete_profile_query = "DELETE FROM Profiles WHERE ProfileName = %s;"
@@ -525,30 +613,32 @@ def delete_table():
                 tree.delete(*tree.get_children())
                 connection.commit()
                 fetch_profile_names()
-                messagebox.showinfo("Success", f"Profile '{selected_profile}' deleted successfully.")
+                messagebox.showinfo(
+                    "Success", f"Profile '{selected_profile}' deleted successfully."
+                )
 
     except mysql.connector.Error as err:
         messagebox.showerror("Error", f"Error: {err}")
 
     finally:
-        if 'connection' in locals() and connection.is_connected():
+        if "connection" in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
+
 
 def global_search(query):
     try:
         connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
+            host=host, user=user, password=password, database=database
         )
 
         if connection.is_connected():
             mycursor = connection.cursor()
             global is_profile, selected_option
             # Determine the table to search based on the is_profile flag
-            selected_table = selected_profile if is_profile else selected_option.replace(" ", "")
+            selected_table = (
+                selected_profile if is_profile else selected_option.replace(" ", "")
+            )
             # Construct a dynamic SQL query for global search
             search_query = f"SELECT * FROM gladiator.{selected_table} WHERE "
             search_conditions = []
@@ -559,12 +649,14 @@ def global_search(query):
             for col in columns:
                 search_conditions.append(f"{col} LIKE %s")
 
-            mycursor.fetchall()  # Fetch the result of the DESCRIBE query
+            mycursor.fetchall()
 
             search_query += " OR ".join(search_conditions)
             search_query += f" LIMIT {limit} OFFSET {current_offset}"
 
-            mycursor.execute(search_query, tuple(f"%{query}%" for _ in range(len(columns))))
+            mycursor.execute(
+                search_query, tuple(f"%{query}%" for _ in range(len(columns)))
+            )
             result = mycursor.fetchall()
 
             # Clear existing data in the Treeview
@@ -574,7 +666,11 @@ def global_search(query):
             # Set column headings
             tree["columns"] = columns
             for col in columns:
-                tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, selected_table, c, True))
+                tree.heading(
+                    col,
+                    text=col,
+                    command=lambda c=col: sort_tree(tree, selected_table, c, True),
+                )
                 tree.column(col, width=100)  # Adjust the width as needed
 
             # Insert new data into the Treeview
@@ -585,10 +681,9 @@ def global_search(query):
         print(f"Error: {err}")
 
     finally:
-        if 'connection' in locals() and connection.is_connected():
+        if "connection" in locals() and connection.is_connected():
             connection.close()
             print("Connection closed")
-
 
 
 # Create the main Tkinter window
@@ -603,7 +698,9 @@ tree = ttk.Treeview(root, columns=columns, show="headings")
 
 # Set up column headings with sorting capability
 for col in columns:
-    tree.heading(col, text=col, command=lambda c=col: sort_tree(tree, selected_option, c, False))
+    tree.heading(
+        col, text=col, command=lambda c=col: sort_tree(tree, selected_option, c, False)
+    )
     tree.column(col, width=100)  # Adjust the width as needed
 
 # Configure the style for the Treeview widget
@@ -633,27 +730,36 @@ def on_profile_select(event):
     selected_profile = profile_dropdown.get()
     is_profile = True
     fetch_profile_data(selected_profile)
-    
+
+
 profile_dropdown.bind("<<ComboboxSelected>>", on_profile_select)
 
 # Create a button for profile creation
-create_profile_button = tk.Button(filter_container, text="Create Profile", command=lambda: create_profile())
+create_profile_button = tk.Button(
+    filter_container, text="Create Profile", command=lambda: create_profile()
+)
 create_profile_button.pack(side="left", padx=10)
 
-delete_table_button = tk.Button(filter_container, text="Delete Profile", command=lambda: delete_table())
+delete_table_button = tk.Button(
+    filter_container, text="Delete Profile", command=lambda: delete_table()
+)
 delete_table_button.pack(side="left", padx=10)
 
 # Add an entry widget for global search
 search_entry = tk.Entry(filter_container)
 search_entry.pack(side="left", padx=5)
 
+
 # Event handler for global search
 def on_global_search():
     query = search_entry.get()
     global_search(query)
-    
+
+
 # Button for global search
-global_search_button = tk.Button(filter_container, text="Search", command=on_global_search)
+global_search_button = tk.Button(
+    filter_container, text="Search", command=on_global_search
+)
 global_search_button.pack(side="left", padx=5)
 
 filter_container.pack(pady=10)
@@ -663,14 +769,23 @@ tree.pack(expand=True, fill="both")
 
 
 # Dropdown menu for selecting options
-tree_options = ["Gladiator Info", "Combat Stats", "Skills", "Background Info", "Health Info", "External Factors", "Outcome"]  # Add option names here
+tree_options = [
+    "Gladiator Info",
+    "Combat Stats",
+    "Skills",
+    "Background Info",
+    "Health Info",
+    "External Factors",
+    "Outcome",
+]  # Add option names here
 tree_selector = ttk.Combobox(nav_container, values=tree_options)
 tree_selector.set(tree_options[0])  # Set default value
 tree_selector.pack(side="left", padx=10)
 
 # Initialize limit and selected_option
-limit = 50  # Adjust the limit based on your requirements
+limit = 50  # Adjust the limit
 selected_option = tree_options[0]  # Set the default option
+
 
 # Event handler for tree selection
 def on_tree_select(event):
@@ -678,6 +793,7 @@ def on_tree_select(event):
     selected_option = tree_selector.get()
     is_profile = False
     fetch_data_for_tree(selected_option)
+
 
 # Bind the event handler to the tree_selector
 tree_selector.bind("<<ComboboxSelected>>", on_tree_select)
