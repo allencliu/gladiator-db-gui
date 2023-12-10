@@ -36,25 +36,25 @@ To set up the database for your project, follow these steps:
     use gladiator;
     ```
 
-7. Load data from the CSV file from `filepath:/gladiator_data.csv` into the `gladiators` table:
+7. Running Initial SQL
+
+    - Run the initial SQL script to create the `gladiators` table. Execute the following command in another Command Prompt window:
+
+    ```bash
+    mysql -u root -p gladiator < path/to/initial.sql
+    ```
+
+8. Load data from the CSV file from `filepath:/gladiator_data.csv` into the `gladiators` table:
 
     ```sql
     load data local infile
-    "~/gladiator_data.csv" into table
+    "path/to/gladiator_data.csv" into table
     gladiators
     fields terminated by ','
     optionally enclosed by '"'
     lines terminated by '\n'
     ignore 1 rows;
     ```
-
-### Running Initial SQL
-
-Now, run the initial SQL script to create the `gladiators` table. Execute the following command:
-
-```bash
-mysql -u root -p gladiator < initial.sql
-```
 
 ### Running Additional SQL Scripts
 ```bash
