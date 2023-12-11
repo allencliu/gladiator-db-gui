@@ -72,22 +72,12 @@ To set up the database for your project, follow these steps:
 
 ## Configuration
 1. Ensure you have a MySQL server installed and running.
-~~
-    2. Update the database connection details in the code:
-    - Host: "localhost"
-    - User: "root"
-    - Password: `password`
-    - Database: "gladiator"
-~~
 
 ## Usage Instructions
 
 ### 1. Run the Executable
 - Locate the `app.exe` file in the `dist` folder.
 - Double-click on `app.exe` to run the application.
-~~
-    - Optional: The executable may be broken after configuring, so you may need to run `app.py` instead after reconfiguring the connection details.
-~~
 - Make sure your database is running on localhost and your schema/database is correct i.e. gladiator
 - Login with your username and password
     - Default username is `root`
